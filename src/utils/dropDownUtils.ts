@@ -1,5 +1,6 @@
 import { TFunction } from "i18next";
 import { DropDownType } from './../components/shared/DropDown';
+import { isJson } from "./utils";
 /*
  * this file contains functions, which are needed for the searchable drop-down selections
  */
@@ -46,6 +47,18 @@ export const formatDropDownOptions = (
 	required: boolean,
 	t: TFunction
 ) => {
+	/**
+	 * This is used to determine whether any entry of the passed `unformattedOptions`
+	 * contains a field which in turn contains an `order` field, indicating that
+	 * a custom ordering for that list exists and the list therefore should not
+	 * be ordered alphabetically.
+	 */
+	const hasCustomOrder = unformattedOptions.some((item: any) => 
+	 	Object.values(item).some(value => typeof value === 'string'
+			&& isJson(value)
+			&& JSON.parse(value).order !== undefined)
+		);
+
 	const formattedOptions = [];
 	if (!required) {
 		formattedOptions.push({
@@ -111,5 +124,7 @@ export const formatDropDownOptions = (
 		}
 	}
 
-	return formattedOptions;
+	return hasCustomOrder
+		? formattedOptions
+		: formattedOptions.sort((a, b) => a.label.localeCompare(b.label));
 };
